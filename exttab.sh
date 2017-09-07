@@ -28,84 +28,92 @@ function main()
     _TB_1=2560x1600
     _TB_1_DIR=left
     _TB_1_PORT=5900
-    _TB_1_OUTPUT=VIRTUAL1
+    # _TB_1_OUTPUT=VIRTUAL1
     _TB_1_HREZ=${_TB_1%%x*}
 
     # input tablet 2 info
     _TB_2=1920x1200
     _TB_2_DIR=right
     _TB_2_PORT=5901
-    _TB_2_OUTPUT=VIRTUAL2
+    # _TB_2_OUTPUT=VIRTUAL2
     _TB_2_HREZ=${_TB_2%%x*}
-
-    #### modeline and name for tablet 1
-    _MD_1=$(cvt ${_TB_1%%x*} ${_TB_1##*x} \
-        | tail -n 1 \
-        | sed -e 's/Modeline //')
-    _MD_1_NAME=$(echo ${_MD_1} \
-        | cut -d" " -f1)
-    _MD_1_MODE=$(echo ${_MD_1} \
-        | cut -d" " -f2-100)
-
-    #### modeline and name for tablet 1
-    _MD_2=$(cvt ${_TB_2%%x*} ${_TB_2##*x} \
-        | tail -n 1 \
-        | sed -e 's/Modeline //')
-    _MD_2_NAME=$(echo ${_MD_2} \
-        | cut -d" " -f1)
-    _MD_2_MODE=$(echo ${_MD_2} \
-        | cut -d" " -f2-100)
 
     trap finish 1 2 3 9 15 SIGINT INT
 }
 
 function start()
 {
+    local _DSPL=${1}
+    local _LREZ=${2}
+    local _LHREZ=${_LREZ%%x*}
+    local _1_OUTPUT=VIRTUAL1
+    local _1_PORT=5900
+    local _2_PORT=5901
+
+    if [[ ${_DSPL} -eq 2 ]]
+    then
+        local _RREZ=${3}
+        local _RHREZ=${_RREZ%%x*}
+    else
+        local _1_SIDE=${3}
+        local _2_OUTPUT=VIRTUAL2
+    fi
+
+    #### modeline and name for tablet 1
+    local _MD=$(cvt ${_LREZ%%x*} ${_LREZ##*x} \
+        | tail -n 1 \
+        | sed -e 's/Modeline //')
+    local _MD_NAME=$(echo ${_MD} \
+        | cut -d" " -f1)
+    local _MD_MODE=$(echo ${_MD} \
+        | cut -d" " -f2-100)
+
     ## create the new mode
     xrandr \
-        --newmode ${_MD_1_NAME} ${_MD_1_MODE}
-
+        --newmode ${_MD_NAME} ${_MD_MODE}
     ## add mode to display
     xrandr \
-        --addmode ${_TB_1_OUTPUT} ${_MD_1_NAME}
-
+        --addmode ${_1_OUTPUT} ${_MD_NAME}
     ## set the mode
     xrandr \
         --auto \
-        --output ${_TB_1_OUTPUT} \
-        --mode ${_MD_1_NAME} \
-        --${_TB_1_DIR}-of eDP1
-
+        --output ${_1_OUTPUT} \
+        --mode ${_MD_NAME} \
+        --${_1_SIDE-left}-of eDP1
     ## start x11vnc
     x11vnc \
         -display :0 \
-        -clip ${_TB_1}+0+0 \
-        -rfbport ${_TB_1_PORT} \
+        -clip ${_LREZ}+0+0 \
+        -rfbport ${_1_PORT} \
         -quiet \
         2>/dev/null 1>&2 &
 
-    ## create the new mode
-    xrandr \
-        --newmode ${_MD_2_NAME} ${_MD_2_MODE}
-
-    ## add mode to display
-    xrandr \
-        --addmode ${_TB_2_OUTPUT} ${_MD_2_NAME}
-
-    ## set the mode
-    xrandr \
-        --auto \
-        --output ${_TB_2_OUTPUT} \
-        --mode ${_MD_2_NAME} \
-        --${_TB_2_DIR}-of eDP1
-
-    ## start x11vnc
-    x11vnc \
-        -display :0 \
-        -clip ${_TB_2}+$((_TB_1_HREZ+_EX_MNTR_HREZ))+0 \
-        -rfbport ${_TB_2_PORT} \
-        -quiet \
-        2>/dev/null 1>&2 &
+    if [[ ${_DSPL} -eq 2 ]]
+    then
+        #### modeline and name for tablet 2
+        local _MD=$(cvt ${_TB_2%%x*} ${_TB_2##*x} \
+            | tail -n 1 \
+            | sed -e 's/Modeline //')
+        local _MD_NAME=$(echo ${_MD_2} \
+            | cut -d" " -f1)
+        local _MD_MODE=$(echo ${_MD_2} \
+            | cut -d" " -f2-100)
+        xrandr \
+            --newmode ${_MD_NAME} ${_MD_MODE}
+        xrandr \
+            --addmode ${_2_OUTPUT} ${_MD_NAME}
+        xrandr \
+            --auto \
+            --output ${_2_OUTPUT} \
+            --mode ${_MD_NAME} \
+            --right-of eDP1
+        x11vnc \
+            -display :0 \
+            -clip ${_RREZ}+$((_LHREZ+_EX_MNTR_HREZ))+0 \
+            -rfbport ${_2_PORT} \
+            -quiet \
+            2>/dev/null 1>&2 &
+    fi
 
     ## show xrandr
     clear
