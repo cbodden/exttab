@@ -6,8 +6,6 @@ LANG=C
 function main()
 {
     set -eo pipefail
-    # set -euo pipefail
-    # set -euo pipefail errexit
     readonly NAME=$(basename $0)
 
     TEN="2560x1600"
@@ -128,14 +126,33 @@ function finish()
 }
 
 
-echo "how many monitors or cleanup / exit running"
+echo "how many monitors [1-2] or exit running process [0]"
+read -p '[0-2]: ' _TBL_CNT
 
-echo "if one - left or right then resolution"
+if [[ ${_TBL_CNT} -eq 2 ]]
+then
+    echo "Tablet resolutions in format ####x####:"
+    read -p 'left resolution: ' _TBL_LEFT_REZ
+    read -p 'right resolution: ' _TBL_RGHT_REZ
+    main
+    tablet 2 ${_TBL_LEFT_REZ} ${_TBL_RIGHT_REZ}
+elif [[ ${_TBL_CNT} -eq 1 ]]
+then
+    echo "Tablet resolution in format #####x#####"
+    read -p 'resoultion: ' _TBL_REZ
+    read -p 'left or right of monitor [l or r]: ' _TBL_SIDE
+    main
+    tablet 1 ${_TBL_REZ} ${_TBL_SIDE}
+elif [[ ${_TBL_CNT} -eq 0 ]]
+then
+    finish
+else
+    echo "Invalid input"
+    exit 1
+fi
 
-echo "if two - rez of left then rez of right"
 
 
-_IN=${1}
 main
 
 if [[ "${_IN}" == "start_mon" || "${_IN}" == "reset_mon" ]]
