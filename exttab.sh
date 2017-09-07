@@ -125,6 +125,7 @@ function finish()
     exit 0
 }
 
+clear
 
 echo "how many monitors [1-2] or exit running process [0]"
 read -p '[0-2]: ' _TBL_CNT
@@ -149,24 +150,4 @@ then
 else
     echo "Invalid input"
     exit 1
-fi
-
-
-
-main
-
-if [[ "${_IN}" == "start_mon" || "${_IN}" == "reset_mon" ]]
-then
-    if declare -f ${_IN} > /dev/null
-    then
-        start_mon
-        ${_IN}
-    fi
-else
-    if declare -f ${_IN} > /dev/null
-    then
-        ${_IN}
-    else
-        echo "Wrong input"
-    fi
 fi
