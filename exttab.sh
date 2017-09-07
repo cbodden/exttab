@@ -8,121 +8,149 @@ function main()
     set -eo pipefail
     readonly NAME=$(basename $0)
 
-    TEN="2560x1600"
-    SEVEN="1920x1200"
-    MON_REZ="2560x1600"
-    _MODELINE=$(cvt ${MON_REZ%%x*} ${MON_REZ##*x} \
-        | tail -n1 \
-        | tr -d "\"" \
-        | sed -e 's/_60.00//' -e 's/Modeline //' -e 's/^ //')
+    #### existing monitor info
+    _EX_MNTR=$(xrandr \
+        | grep "connected primary")
 
-    _SM_MODE=$(echo ${_MODELINE} \
+    if (( $(grep -c . <<<"${_EX_MNTR}") < 2 ))
+    then
+        _EX_MNTR_NAME=$(echo ${_EX_MNTR} \
+            | awk '{print $1}')
+        _EX_MNTR_REZ=$(echo ${_EX_MNTR} \
+            | awk '{print $4}')
+        _EX_MNTR_HREZ=${_EX_MNTR_REZ%%x*}
+    else
+        echo "Check xrandr.. multiple existing displays"
+        exit 1
+    fi
+
+    # input tablet 1 info
+    _TB_1=2560x1600
+    _TB_1_DIR=left
+    _TB_1_PORT=5900
+    _TB_1_OUTPUT=VIRTUAL1
+    _TB_1_HREZ=${_TB_1%%x*}
+
+    # input tablet 2 info
+    _TB_2=1920x1200
+    _TB_2_DIR=right
+    _TB_2_PORT=5901
+    _TB_2_OUTPUT=VIRTUAL2
+    _TB_2_HREZ=${_TB_2%%x*}
+
+    #### modeline and name for tablet 1
+    _MD_1=$(cvt ${_TB_1%%x*} ${_TB_1##*x} \
+        | tail -n 1 \
+        | sed -e 's/Modeline //')
+    _MD_1_NAME=$(echo ${_MD_1} \
         | cut -d" " -f1)
+    _MD_1_MODE=$(echo ${_MD_1} \
+        | cut -d" " -f2-100)
 
-    _LG_MODE=$(echo ${_MODELINE} \
+    #### modeline and name for tablet 1
+    _MD_2=$(cvt ${_TB_2%%x*} ${_TB_2##*x} \
+        | tail -n 1 \
+        | sed -e 's/Modeline //')
+    _MD_2_NAME=$(echo ${_MD_2} \
+        | cut -d" " -f1)
+    _MD_2_MODE=$(echo ${_MD_2} \
         | cut -d" " -f2-100)
 
     trap finish 1 2 3 9 15 SIGINT INT
 }
 
-function start_mon()
+function start()
 {
-    xrandr --newmode \"${_SM_MODE}\" ${_LG_MODE}
-    xrandr --addmode VIRTUAL1 ${_SM_MODE}
-    xrandr --auto --output VIRTUAL1 --mode ${_SM_MODE} --left-of eDP1
-    x11vnc -clip ${_SM_MODE}
+    ## create the new mode
+    xrandr \
+        --newmode ${_MD_1_NAME} ${_MD_1_MODE}
+
+    ## add mode to display
+    xrandr \
+        --addmode ${_TB_1_OUTPUT} ${_MD_1_NAME}
+
+    ## set the mode
+    xrandr \
+        --auto \
+        --output ${_TB_1_OUTPUT} \
+        --mode ${_MD_1_NAME} \
+        --${_TB_1_DIR}-of eDP1
+
+    ## start x11vnc
+    x11vnc \
+        -display :0 \
+        -clip ${_TB_1}+0+0 \
+        -rfbport ${_TB_1_PORT} \
+        -quiet \
+        2>/dev/null 1>&2 &
+
+    ## create the new mode
+    xrandr \
+        --newmode ${_MD_2_NAME} ${_MD_2_MODE}
+
+    ## add mode to display
+    xrandr \
+        --addmode ${_TB_2_OUTPUT} ${_MD_2_NAME}
+
+    ## set the mode
+    xrandr \
+        --auto \
+        --output ${_TB_2_OUTPUT} \
+        --mode ${_MD_2_NAME} \
+        --${_TB_2_DIR}-of eDP1
+
+    ## start x11vnc
+    x11vnc \
+        -display :0 \
+        -clip ${_TB_2}+$((_TB_1_HREZ+_EX_MNTR_HREZ))+0 \
+        -rfbport ${_TB_2_PORT} \
+        -quiet \
+        2>/dev/null 1>&2 &
+
+    ## show xrandr
+    clear
+    xrandr
 }
 
-function reset_mon()
+function stop()
 {
-    xrandr -s 0
-    xrandr --output VIRTUAL1 --off
-    xrandr --delmode VIRTUAL1 ${_SM_MODE}
-    xrandr --rmmode ${_SM_MODE}
-}
+    ## reset display
+    xrandr \
+        -s 0
 
-function clean()
-{
-    if ls /tmp/ext.sh_* 1> /dev/null 2>&1
-    then
-        for _FCL in $(cat /tmp/ext.sh_*)
-        do
-            kill -9 ${_FCL} 2> /dev/null \
-                || true
-        done
-        rm /tmp/ext.sh_*
-    fi
+    ## kill x11vnc
+    for _KILL in $(ps -ef | grep x11vnc | awk '{print $2}')
+    do
+        kill -9 ${_KILL} 2> /dev/null
+    done
 
-    xrandr -s 0
-    xrandr --output VIRTUAL1 --off
-    xrandr --delmode VIRTUAL1 ${_SM_MODE}
-    xrandr --rmmode ${_SM_MODE}
+    ## disable output
+    xrandr \
+        --output ${_TB_1_OUTPUT} \
+        --off
+    xrandr \
+        --output ${_TB_2_OUTPUT} \
+        --off
 
-    exit 0
-}
+    ## delete mode
+    xrandr \
+        --delmode ${_TB_1_OUTPUT} ${_MD_1_NAME}
+    xrandr \
+        --delmode ${_TB_2_OUTPUT} ${_MD_2_NAME}
 
-function _10()
-{
-    local _TMP_10=$(mktemp --tmpdir ${NAME}_10_$$-XXXX.tmp)
-    declare TMP_XVF_10=${_TMP_10}
+    ## remove name
+    xrandr \
+        --rmmode ${_MD_1_NAME}
+    xrandr \
+        --rmmode ${_MD_2_NAME}
 
-    local export DISPLAY=:100
+    ## weird hack fix - sometimes when cleaning up, keyboard repaet
+    ## fails so needed this until i debug
+    xset r on
 
-    Xvfb :100 -screen 0 ${TEN}x16 &
-    echo $! >> ${TMP_XVF_10}
-
-    xterm -display :100 -maximized -fa 9x15 -e glances &
-    echo $! >> ${TMP_XVF_10}
-
-    x11vnc -display :100 -noshm -nocursor  -ncache 10 -rfbport 5900
-    echo $! >> ${TMP_XVF_10}
-}
-
-function _07()
-{
-    local _TMP_07=$(mktemp --tmpdir ${NAME}_07_$$-XXXX.tmp)
-    declare TMP_XVF_07=${_TMP_07}
-
-    local export DISPLAY=:200
-    export NMON=mndck
-
-    Xvfb :200 -screen 0 ${SEVEN}x16 &
-    echo $! >> ${TMP_XVF_07}
-
-    xterm -display :200 -geometry 80x54+0+0 -fa 4x6 -e nmon &
-    echo $! >> ${TMP_XVF_07}
-
-    xterm -display :200 -geometry 79x27-0+0 -fa 4x6 -e ttyload &
-    echo $! >> ${TMP_XVF_07}
-
-    xterm -display :200 -geometry 79x27-0-0 -fa 4x6 -e ttysys m &
-    echo $! >> ${TMP_XVF_07}
-
-    x11vnc -display :200 -noshm -nocursor  -ncache 10 -rfbport 5901
-    echo $! >> ${TMP_XVF_07}
-}
-
-function finish()
-{
-    if ls /tmp/ext.sh_* 1> /dev/null 2>&1
-    then
-        for _CLEAN in $(cat ${TMP_XVF_10} ${TMP_XVF_07})
-        do
-            if ps -p ${_CLEAN} > /dev/null
-            then
-                kill -9 ${_CLEAN} 2> /dev/null \
-                    || true
-            fi
-        done
-        rm ${TMP_XVF_10} ${TMP_XVF_07}
-    fi
-
-    xrandr -s 0
-    xrandr --output VIRTUAL1 --off
-    xrandr --delmode VIRTUAL1 ${_SM_MODE}
-    xrandr --rmmode ${_SM_MODE}
-
-    exit 0
+    ## show xrandr
+    clear
+    xrandr
 }
 
 clear
@@ -136,18 +164,62 @@ then
     read -p 'left resolution: ' _TBL_LEFT_REZ
     read -p 'right resolution: ' _TBL_RGHT_REZ
     main
-    tablet 2 ${_TBL_LEFT_REZ} ${_TBL_RIGHT_REZ}
+    start 2 ${_TBL_LEFT_REZ} ${_TBL_RIGHT_REZ}
 elif [[ ${_TBL_CNT} -eq 1 ]]
 then
     echo "Tablet resolution in format #####x#####"
     read -p 'resoultion: ' _TBL_REZ
     read -p 'left or right of monitor [l or r]: ' _TBL_SIDE
     main
-    tablet 1 ${_TBL_REZ} ${_TBL_SIDE}
+    start 1 ${_TBL_REZ} ${_TBL_SIDE}
 elif [[ ${_TBL_CNT} -eq 0 ]]
 then
-    finish
+    stop
+    exit 0
 else
     echo "Invalid input"
     exit 1
 fi
+
+
+### save for later
+##function _10()
+##{
+##    local _TMP_10=$(mktemp --tmpdir ${NAME}_10_$$-XXXX.tmp)
+##    declare TMP_XVF_10=${_TMP_10}
+##
+##    local export DISPLAY=:100
+##
+##    Xvfb :100 -screen 0 ${TEN}x16 &
+##    echo $! >> ${TMP_XVF_10}
+##
+##    xterm -display :100 -maximized -fa 9x15 -e glances &
+##    echo $! >> ${TMP_XVF_10}
+##
+##    x11vnc -display :100 -noshm -nocursor  -ncache 10 -rfbport 5900
+##    echo $! >> ${TMP_XVF_10}
+##}
+##
+##function _07()
+##{
+##    local _TMP_07=$(mktemp --tmpdir ${NAME}_07_$$-XXXX.tmp)
+##    declare TMP_XVF_07=${_TMP_07}
+##
+##    local export DISPLAY=:200
+##    export NMON=mndck
+##
+##    Xvfb :200 -screen 0 ${SEVEN}x16 &
+##    echo $! >> ${TMP_XVF_07}
+##
+##    xterm -display :200 -geometry 80x54+0+0 -fa 4x6 -e nmon &
+##    echo $! >> ${TMP_XVF_07}
+##
+##    xterm -display :200 -geometry 79x27-0+0 -fa 4x6 -e ttyload &
+##    echo $! >> ${TMP_XVF_07}
+##
+##    xterm -display :200 -geometry 79x27-0-0 -fa 4x6 -e ttysys m &
+##    echo $! >> ${TMP_XVF_07}
+##
+##    x11vnc -display :200 -noshm -nocursor  -ncache 10 -rfbport 5901
+##    echo $! >> ${TMP_XVF_07}
+##}
