@@ -117,26 +117,25 @@ function stop()
         kill -9 ${_KILL} 2> /dev/null
     done
 
-    ## disable output
-    xrandr \
-        --output ${_TB_1_OUTPUT} \
-        --off
-    xrandr \
-        --output ${_TB_2_OUTPUT} \
-        --off
+    declare -r _EX_OUT=($(\
+        xrandr \
+        | grep -i'VIRTUAL.* connected' \
+        | awk '{print $1"-"$3}' \
+        | cut -d"+" -f1))
 
-    ## delete mode
-    xrandr \
-        --delmode ${_TB_1_OUTPUT} ${_MD_1_NAME}
-    xrandr \
-        --delmode ${_TB_2_OUTPUT} ${_MD_2_NAME}
-
-    ## remove name
-    xrandr \
-        --rmmode ${_MD_1_NAME}
-    xrandr \
-        --rmmode ${_MD_2_NAME}
-
+    for ITER in "${_EX_OUT[@]}"
+    do
+        ## disable output
+        xrandr \
+            --output ${ITER%%-*} \
+            --off
+        ## delete mode
+        xrandr \
+            --delmode ${ITER%%-*} ${ITER##*-}
+        ## remove name
+        xrandr \
+            --rmmode ${ITER%%-*}
+    done
     ## weird hack fix - sometimes when cleaning up, keyboard repaet
     ## fails so needed this until i debug
     xset r on
@@ -173,46 +172,3 @@ else
     echo "Invalid input"
     exit 1
 fi
-
-
-### save for later
-##function _10()
-##{
-##    local _TMP_10=$(mktemp --tmpdir ${NAME}_10_$$-XXXX.tmp)
-##    declare TMP_XVF_10=${_TMP_10}
-##
-##    local export DISPLAY=:100
-##
-##    Xvfb :100 -screen 0 ${TEN}x16 &
-##    echo $! >> ${TMP_XVF_10}
-##
-##    xterm -display :100 -maximized -fa 9x15 -e glances &
-##    echo $! >> ${TMP_XVF_10}
-##
-##    x11vnc -display :100 -noshm -nocursor  -ncache 10 -rfbport 5900
-##    echo $! >> ${TMP_XVF_10}
-##}
-##
-##function _07()
-##{
-##    local _TMP_07=$(mktemp --tmpdir ${NAME}_07_$$-XXXX.tmp)
-##    declare TMP_XVF_07=${_TMP_07}
-##
-##    local export DISPLAY=:200
-##    export NMON=mndck
-##
-##    Xvfb :200 -screen 0 ${SEVEN}x16 &
-##    echo $! >> ${TMP_XVF_07}
-##
-##    xterm -display :200 -geometry 80x54+0+0 -fa 4x6 -e nmon &
-##    echo $! >> ${TMP_XVF_07}
-##
-##    xterm -display :200 -geometry 79x27-0+0 -fa 4x6 -e ttyload &
-##    echo $! >> ${TMP_XVF_07}
-##
-##    xterm -display :200 -geometry 79x27-0-0 -fa 4x6 -e ttysys m &
-##    echo $! >> ${TMP_XVF_07}
-##
-##    x11vnc -display :200 -noshm -nocursor  -ncache 10 -rfbport 5901
-##    echo $! >> ${TMP_XVF_07}
-##}
