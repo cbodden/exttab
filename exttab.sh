@@ -24,20 +24,6 @@ function main()
         exit 1
     fi
 
-    # input tablet 1 info
-    _TB_1=2560x1600
-    _TB_1_DIR=left
-    _TB_1_PORT=5900
-    # _TB_1_OUTPUT=VIRTUAL1
-    _TB_1_HREZ=${_TB_1%%x*}
-
-    # input tablet 2 info
-    _TB_2=1920x1200
-    _TB_2_DIR=right
-    _TB_2_PORT=5901
-    # _TB_2_OUTPUT=VIRTUAL2
-    _TB_2_HREZ=${_TB_2%%x*}
-
     trap finish 1 2 3 9 15 SIGINT INT
 }
 
@@ -59,7 +45,7 @@ function start()
         local _2_OUTPUT=VIRTUAL2
     fi
 
-    #### modeline and name for tablet 1
+    #### modeline and name
     local _MD=$(cvt ${_LREZ%%x*} ${_LREZ##*x} \
         | tail -n 1 \
         | sed -e 's/Modeline //')
@@ -79,7 +65,7 @@ function start()
         --auto \
         --output ${_1_OUTPUT} \
         --mode ${_MD_NAME} \
-        --${_1_SIDE-left}-of eDP1
+        --${_1_SIDE-left}-of ${_EX_MNTR_NAME}
     ## start x11vnc
     x11vnc \
         -display :0 \
@@ -90,8 +76,7 @@ function start()
 
     if [[ ${_DSPL} -eq 2 ]]
     then
-        #### modeline and name for tablet 2
-        local _MD=$(cvt ${_TB_2%%x*} ${_TB_2##*x} \
+        local _MD=$(cvt ${_RREZ%%x*} ${_RREZ##*x} \
             | tail -n 1 \
             | sed -e 's/Modeline //')
         local _MD_NAME=$(echo ${_MD_2} \
@@ -106,7 +91,7 @@ function start()
             --auto \
             --output ${_2_OUTPUT} \
             --mode ${_MD_NAME} \
-            --right-of eDP1
+            --right-of ${EX_MNTR_NAME}
         x11vnc \
             -display :0 \
             -clip ${_RREZ}+$((_LHREZ+_EX_MNTR_HREZ))+0 \
