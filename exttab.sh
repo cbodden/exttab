@@ -40,9 +40,9 @@ function start()
     then
         local _RREZ=${3}
         local _RHREZ=${_RREZ%%x*}
+        local _2_OUTPUT=VIRTUAL2
     else
         local _1_SIDE=${3}
-        local _2_OUTPUT=VIRTUAL2
     fi
 
     #### modeline and name
@@ -79,9 +79,9 @@ function start()
         local _MD=$(cvt ${_RREZ%%x*} ${_RREZ##*x} \
             | tail -n 1 \
             | sed -e 's/Modeline //')
-        local _MD_NAME=$(echo ${_MD_2} \
+        local _MD_NAME=$(echo ${_MD} \
             | cut -d" " -f1)
-        local _MD_MODE=$(echo ${_MD_2} \
+        local _MD_MODE=$(echo ${_MD} \
             | cut -d" " -f2-100)
         xrandr \
             --newmode ${_MD_NAME} ${_MD_MODE}
@@ -91,7 +91,7 @@ function start()
             --auto \
             --output ${_2_OUTPUT} \
             --mode ${_MD_NAME} \
-            --right-of ${EX_MNTR_NAME}
+            --right-of ${_EX_MNTR_NAME}
         x11vnc \
             -display :0 \
             -clip ${_RREZ}+$((_LHREZ+_EX_MNTR_HREZ))+0 \
@@ -156,7 +156,7 @@ then
     read -p 'left resolution: ' _TBL_LEFT_REZ
     read -p 'right resolution: ' _TBL_RGHT_REZ
     main
-    start 2 ${_TBL_LEFT_REZ} ${_TBL_RIGHT_REZ}
+    start 2 ${_TBL_LEFT_REZ} ${_TBL_RGHT_REZ}
 elif [[ ${_TBL_CNT} -eq 1 ]]
 then
     echo "Tablet resolution in format #####x#####"
