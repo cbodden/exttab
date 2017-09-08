@@ -119,7 +119,7 @@ function stop()
 
     declare -r _EX_OUT=($(\
         xrandr \
-        | grep -i'VIRTUAL.* connected' \
+        | grep -i 'VIRTUAL.* connected' \
         | awk '{print $1"-"$3}' \
         | cut -d"+" -f1))
 
@@ -141,7 +141,7 @@ function stop()
     xset r on
 
     ## show xrandr
-    clear
+    # clear
     xrandr
 }
 
