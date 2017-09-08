@@ -49,9 +49,9 @@ function _start()
     then
         _CLIP=${_EX_MNTR_HREZ}
     elif [[ ${#_CLIP_TEST[@]} -eq 1 ]]
-        then
-            _SCRP=${_CLIP_TEST[0]}
-            _CLIP=$((_SCRP+_EX_MNTR_HREZ))
+    then
+        _SCRP=${_CLIP_TEST[0]}
+        _CLIP=$((_SCRP+_EX_MNTR_HREZ))
     else
         _CLIP=0
     fi
@@ -71,7 +71,6 @@ function _start()
     ## add mode to display
     xrandr \
         --addmode ${_OUTPUT} ${_MD_NAME}
-        # --addmode ${_1_OUTPUT} ${_MD_NAME}
     ## set the mode
     xrandr \
         --auto \
