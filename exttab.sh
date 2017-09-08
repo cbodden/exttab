@@ -99,6 +99,7 @@ function _stop()
         -s 0
 
     ## find and kill all instances of x11vnc
+    _KILL=()
     declare -r _KILL=($(\
         ps -ef \
         | awk '/x11vnc/ {print $2}'))
@@ -169,7 +170,6 @@ then
         "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
-    # _start 2 ${_TBL_LEFT_REZ// } ${_TBL_RGHT_REZ// }
     _start ${_TBL_LEFT_REZ// } left 5900 VIRTUAL1
     _start ${_TBL_RGHT_REZ// } right 5901 VIRTUAL2
 elif [[ ${_TBL_CNT// } -eq 1 ]]
