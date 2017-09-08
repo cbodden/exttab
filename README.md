@@ -24,8 +24,9 @@ Base usage:
 git clone git@github.com:cbodden/exttab.git
 cd exttab
 ./exttab.sh
-
 ```
+If using one tablet, now you connect via vnc port 5900, if two tablets
+then the second one connects via port 5901
 
 Usage explained:
 ```
