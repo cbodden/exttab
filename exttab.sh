@@ -8,7 +8,8 @@ function main()
     set -eo pipefail
     readonly NAME=$(basename $0)
 
-    #### existing monitor info
+
+    ## existing monitor info
     readonly _EX_MNTR=$(xrandr \
         | grep "connected primary")
 
@@ -153,6 +154,14 @@ function _stop()
 }
 
 clear
+
+## check if xrandr && x11vnc exists
+declare -r _LIST=( xrandr x11vnc )
+for ITER in "${_LIST[@]}"
+do
+    command -v ${ITER} >/dev/null 2>&1 \
+        || { printf "%s\n" "${ITER} not found. . ." >&2; exit 1; }
+done
 
 printf "%s\n" \
     "how many monitors [1-2] or exit running process by pressing [x]"
