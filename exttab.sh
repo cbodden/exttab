@@ -127,10 +127,14 @@ function _stop()
     xrandr \
         -s 0
 
-    ## kill all instances of x11vnc
-    for _KILL in $(ps -ef | grep x11vnc | awk '{print $2}')
+    ## find and kill all instances of x11vnc
+    declare -r _KILL=($(\
+        ps -ef \
+        | awk '/x11vnc/ {print $2}'))
+
+    for ITER in "${_KILL[@]}"
     do
-        kill -9 ${_KILL} 2> /dev/null
+        kill -9 ${ITER} 2> /dev/null
     done
 
     ## find all output modes named 'VIRTUAK.*'
@@ -170,8 +174,7 @@ function _stop()
             --rmmode \"${ITER##*-}\"
     done
 
-    ## weird hack fix - sometimes when cleaning up, keyboard repaet
-    ## fails so needed this until i debug
+    ## hack fix - when cleaning up, keyboard repaet fails
     xset r on
     reset
 
