@@ -88,7 +88,7 @@ function _start()
         2>/dev/null 1>&2 &
 
     printf "%s\n" \
-        "${_OUTPUT} configured to the ${_SIDE} of ${_EX_MNTR_NAME} on port ${3}"
+        "${_OUTPUT} configured ${_SIDE} of ${_EX_MNTR_NAME} on port ${3}"
 }
 
 function _stop()
