@@ -29,36 +29,35 @@ function main()
 
 function _start()
 {
-    local _DSPL=${1}
-    local _LREZ=${2}
-    local _LHREZ=${_LREZ%%x*}
-    local _1_OUTPUT=VIRTUAL1
-    local _1_PORT=5900
-    local _2_PORT=5901
+    local _REZ=${1}
+    local _SIDE=${2}
+    local _PORT=${3}
+    local _OUTPUT=${4}
 
     if [[ ! -z ${_TBL_PASSWD// } ]]
     then
-        _PASSWD="-passwd ${_TBL_PASSWD}"
+        local _PASSWD="-passwd ${_TBL_PASSWD}"
     fi
 
-    if [[ ${_DSPL} -eq 2 ]]
-    then
-        local _RREZ=${3}
-        local _RHREZ=${_RREZ%%x*}
-        local _2_OUTPUT=VIRTUAL2
-    else
-        local _1_SIDE=${3}
-    fi
+    _CLIP_TEST=()
+    declare -r _CLIP_TEST=($(\
+        xrandr \
+        | awk '/VIRTUAL1.connected/ {print $3}' \
+        | cut -d"x" -f1))
 
-    if [[ "${_1_SIDE}" == "right" ]]
+    if [[ "${_SIDE}" == "right" ]] && [[ "${_OUTPUT}" == "VIRTUAL1" ]]
     then
         _CLIP=${_EX_MNTR_HREZ}
+    elif [[ ${#_CLIP_TEST[@]} -eq 1 ]]
+        then
+            _SCRP=${_CLIP_TEST[0]}
+            _CLIP=$((_SCRP+_EX_MNTR_HREZ))
     else
         _CLIP=0
     fi
 
     #### modeline and name
-    local _MD=$(cvt ${_LREZ%%x*} ${_LREZ##*x} \
+    local _MD=$(cvt ${_REZ%%x*} ${_REZ##*x} \
         | tail -n 1 \
         | sed -e 's/Modeline //')
     local _MD_NAME=$(echo ${_MD} \
@@ -71,50 +70,23 @@ function _start()
         --newmode ${_MD_NAME} ${_MD_MODE}
     ## add mode to display
     xrandr \
-        --addmode ${_1_OUTPUT} ${_MD_NAME}
+        --addmode ${_OUTPUT} ${_MD_NAME}
+        # --addmode ${_1_OUTPUT} ${_MD_NAME}
     ## set the mode
     xrandr \
         --auto \
-        --output ${_1_OUTPUT} \
+        --output ${_OUTPUT} \
         --mode ${_MD_NAME} \
-        --${_1_SIDE-left}-of ${_EX_MNTR_NAME}
+        --${_SIDE}-of ${_EX_MNTR_NAME}
     ## _start x11vnc
     x11vnc \
         -display :0 \
-        -clip ${_LREZ}+${_CLIP}+0 \
-        -rfbport ${_1_PORT} \
+        -clip ${_REZ}+${_CLIP}+0 \
+        -rfbport ${_PORT} \
         -quiet \
         -viewonly \
         ${_PASSWD} \
         2>/dev/null 1>&2 &
-
-    if [[ ${_DSPL} -eq 2 ]]
-    then
-        local _MD=$(cvt ${_RREZ%%x*} ${_RREZ##*x} \
-            | tail -n 1 \
-            | sed -e 's/Modeline //')
-        local _MD_NAME=$(echo ${_MD} \
-            | cut -d" " -f1)
-        local _MD_MODE=$(echo ${_MD} \
-            | cut -d" " -f2-100)
-        xrandr \
-            --newmode ${_MD_NAME} ${_MD_MODE}
-        xrandr \
-            --addmode ${_2_OUTPUT} ${_MD_NAME}
-        xrandr \
-            --auto \
-            --output ${_2_OUTPUT} \
-            --mode ${_MD_NAME} \
-            --right-of ${_EX_MNTR_NAME}
-        x11vnc \
-            -display :0 \
-            -clip ${_RREZ}+$((_LHREZ+_EX_MNTR_HREZ))+0 \
-            -rfbport ${_2_PORT} \
-            -quiet \
-            -viewonly \
-            ${_PASSWD} \
-            2>/dev/null 1>&2 &
-    fi
 
     ## show xrandr
     clear
@@ -198,7 +170,9 @@ then
         "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
-    _start 2 ${_TBL_LEFT_REZ// } ${_TBL_RGHT_REZ// }
+    # _start 2 ${_TBL_LEFT_REZ// } ${_TBL_RGHT_REZ// }
+    _start ${_TBL_LEFT_REZ// } left 5900 VIRTUAL1
+    _start ${_TBL_RGHT_REZ// } right 5901 VIRTUAL2
 elif [[ ${_TBL_CNT// } -eq 1 ]]
 then
     read -p 'resoultion: ' _TBL_REZ
@@ -207,7 +181,7 @@ then
         "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
-    _start 1 ${_TBL_REZ// } ${_TBL_SIDE// }
+    _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
 elif [[ "${_TBL_CNT// }" == "x" ]] || [[ "${_TBL_CNT// }" == "X" ]]
 then
     _stop
