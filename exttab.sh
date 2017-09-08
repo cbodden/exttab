@@ -36,6 +36,11 @@ function start()
     local _1_PORT=5900
     local _2_PORT=5901
 
+    if [[ ! -z ${_TBL_PASSWD// } ]]
+    then
+        _PASSWD="-passwd ${_TBL_PASSWD}"
+    fi
+
     if [[ ${_DSPL} -eq 2 ]]
     then
         local _RREZ=${3}
@@ -79,6 +84,8 @@ function start()
         -clip ${_LREZ}+${_CLIP}+0 \
         -rfbport ${_1_PORT} \
         -quiet \
+        -viewonly \
+        ${_PASSWD} \
         2>/dev/null 1>&2 &
 
     if [[ ${_DSPL} -eq 2 ]]
@@ -104,6 +111,8 @@ function start()
             -clip ${_RREZ}+$((_LHREZ+_EX_MNTR_HREZ))+0 \
             -rfbport ${_2_PORT} \
             -quiet \
+            -viewonly \
+            ${_PASSWD} \
             2>/dev/null 1>&2 &
     fi
 
@@ -179,6 +188,8 @@ then
     echo "Tablet resolutions in format ####x####:"
     read -p 'left resolution: ' _TBL_LEFT_REZ
     read -p 'right resolution: ' _TBL_RGHT_REZ
+    echo "Should we set a password (leave blank for none) ?"
+    read -sp 'leave blank for none: ' _TBL_PASSWD
     main
     start 2 ${_TBL_LEFT_REZ} ${_TBL_RGHT_REZ}
 elif [[ ${_TBL_CNT} -eq 1 ]]
@@ -186,6 +197,8 @@ then
     echo "Tablet resolution in format #####x#####"
     read -p 'resoultion: ' _TBL_REZ
     read -p 'left or right of monitor [left or right]: ' _TBL_SIDE
+    echo "Should we set a password (leave blank for none) ?"
+    read -sp 'leave blank for none: ' _TBL_PASSWD
     main
     start 1 ${_TBL_REZ} ${_TBL_SIDE}
 elif [[ ${_TBL_CNT} -eq 0 ]]
