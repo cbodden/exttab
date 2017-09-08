@@ -24,7 +24,7 @@ function main()
         exit 1
     fi
 
-    trap finish 1 2 3 9 15 SIGINT INT
+    trap stop 1 2 3 9 15 SIGINT INT
 }
 
 function start()
@@ -43,6 +43,13 @@ function start()
         local _2_OUTPUT=VIRTUAL2
     else
         local _1_SIDE=${3}
+    fi
+
+    if [[ "${_1_SIDE}" == "right" ]]
+    then
+        _CLIP=${_EX_MNTR_HREZ}
+    else
+        _CLIP=0
     fi
 
     #### modeline and name
@@ -69,7 +76,7 @@ function start()
     ## start x11vnc
     x11vnc \
         -display :0 \
-        -clip ${_LREZ}+0+0 \
+        -clip ${_LREZ}+${_CLIP}+0 \
         -rfbport ${_1_PORT} \
         -quiet \
         2>/dev/null 1>&2 &
@@ -178,7 +185,7 @@ elif [[ ${_TBL_CNT} -eq 1 ]]
 then
     echo "Tablet resolution in format #####x#####"
     read -p 'resoultion: ' _TBL_REZ
-    read -p 'left or right of monitor [l or r]: ' _TBL_SIDE
+    read -p 'left or right of monitor [left or right]: ' _TBL_SIDE
     main
     start 1 ${_TBL_REZ} ${_TBL_SIDE}
 elif [[ ${_TBL_CNT} -eq 0 ]]
