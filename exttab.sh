@@ -87,9 +87,8 @@ function _start()
         ${_PASSWD} \
         2>/dev/null 1>&2 &
 
-    ## show xrandr
-    clear
-    xrandr
+    printf "%s\n" \
+        "${_OUTPUT} configured to the ${_SIDE} of ${_EX_MNTR_NAME} on port ${3}"
 }
 
 function _stop()
@@ -169,6 +168,7 @@ then
     printf "%s\n" \
         "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
+    printf "\n"
     main
     _start ${_TBL_LEFT_REZ// } left 5900 VIRTUAL1
     _start ${_TBL_RGHT_REZ// } right 5901 VIRTUAL2
@@ -179,6 +179,7 @@ then
     printf "%s\n" \
         "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
+    printf "\n"
     main
     _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
 elif [[ "${_TBL_CNT// }" == "x" ]] || [[ "${_TBL_CNT// }" == "X" ]]
