@@ -24,10 +24,10 @@ function main()
         exit 1
     fi
 
-    trap stop 1 2 3 9 15 SIGINT INT
+    trap _stop 1 2 3 9 15 SIGINT INT
 }
 
-function start()
+function _start()
 {
     local _DSPL=${1}
     local _LREZ=${2}
@@ -78,7 +78,7 @@ function start()
         --output ${_1_OUTPUT} \
         --mode ${_MD_NAME} \
         --${_1_SIDE-left}-of ${_EX_MNTR_NAME}
-    ## start x11vnc
+    ## _start x11vnc
     x11vnc \
         -display :0 \
         -clip ${_LREZ}+${_CLIP}+0 \
@@ -121,7 +121,7 @@ function start()
     xrandr
 }
 
-function stop()
+function _stop()
 {
     ## reset display
     xrandr \
@@ -172,18 +172,17 @@ function stop()
     ## weird hack fix - sometimes when cleaning up, keyboard repaet
     ## fails so needed this until i debug
     xset r on
+    reset
 
-    ## show xrandr
-    # clear
     xrandr
 }
 
 clear
 
-echo "how many monitors [1-2] or exit running process [0]"
-read -p '[0-2]: ' _TBL_CNT
+echo "how many monitors [1-2] or exit running process by pressing [x]"
+read -p '[1-2, x]: ' _TBL_CNT
 
-if [[ ${_TBL_CNT} -eq 2 ]]
+if [[ ${_TBL_CNT// } -eq 2 ]]
 then
     echo "Tablet resolutions in format ####x####:"
     read -p 'left resolution: ' _TBL_LEFT_REZ
@@ -191,8 +190,8 @@ then
     echo "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
-    start 2 ${_TBL_LEFT_REZ} ${_TBL_RGHT_REZ}
-elif [[ ${_TBL_CNT} -eq 1 ]]
+    _start 2 ${_TBL_LEFT_REZ// } ${_TBL_RGHT_REZ// }
+elif [[ ${_TBL_CNT// } -eq 1 ]]
 then
     echo "Tablet resolution in format #####x#####"
     read -p 'resoultion: ' _TBL_REZ
@@ -200,10 +199,10 @@ then
     echo "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
-    start 1 ${_TBL_REZ} ${_TBL_SIDE}
-elif [[ ${_TBL_CNT} -eq 0 ]]
+    _start 1 ${_TBL_REZ// } ${_TBL_SIDE// }
+elif [[ "${_TBL_CNT// }" == "x" ]] || [[ "${_TBL_CNT// }" == "X" ]]
 then
-    stop
+    _stop
     exit 0
 else
     echo "Invalid input"
