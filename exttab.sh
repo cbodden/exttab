@@ -117,25 +117,42 @@ function stop()
         kill -9 ${_KILL} 2> /dev/null
     done
 
-    declare -r _EX_OUT=($(\
+    _EX_OUT_OFF=()
+    declare -r _EX_OUT_OFF=($(\
         xrandr \
         | grep -i 'VIRTUAL.* connected' \
         | awk '{print $1"-"$3}' \
+        | tac \
         | cut -d"+" -f1))
 
-    for ITER in "${_EX_OUT[@]}"
+    for ITER in "${_EX_OUT_OFF[@]}"
     do
         ## disable output
         xrandr \
             --output ${ITER%%-*} \
             --off
+    done
+
+    _EX_OUT_RM=()
+    declare -r _EX_OUT_RM=($(\
+        xrandr \
+        | grep -i 'VIRTUAL[1-2]' -A 1 \
+        | awk '{print $1}' \
+        | sed 'N;s/\n/ /' \
+        | tr " " "-" \
+        | sed 's/"//g' \
+        | tac ))
+
+    for ITER in "${_EX_OUT_RM[@]}"
+    do
         ## delete mode
         xrandr \
-            --delmode ${ITER%%-*} ${ITER##*-}
+            --delmode ${ITER%%-*} \"${ITER##*-}\"
         ## remove name
         xrandr \
-            --rmmode ${ITER%%-*}
+            --rmmode \"${ITER##*-}\"
     done
+
     ## weird hack fix - sometimes when cleaning up, keyboard repaet
     ## fails so needed this until i debug
     xset r on
