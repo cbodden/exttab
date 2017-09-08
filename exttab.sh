@@ -9,18 +9,18 @@ function main()
     readonly NAME=$(basename $0)
 
     #### existing monitor info
-    _EX_MNTR=$(xrandr \
+    readonly _EX_MNTR=$(xrandr \
         | grep "connected primary")
 
     if (( $(grep -c . <<<"${_EX_MNTR}") < 2 ))
     then
-        _EX_MNTR_NAME=$(echo ${_EX_MNTR} \
+        readonly _EX_MNTR_NAME=$(echo ${_EX_MNTR} \
             | awk '{print $1}')
-        _EX_MNTR_REZ=$(echo ${_EX_MNTR} \
+        readonly _EX_MNTR_REZ=$(echo ${_EX_MNTR} \
             | awk '{print $4}')
-        _EX_MNTR_HREZ=${_EX_MNTR_REZ%%x*}
+        readonly _EX_MNTR_HREZ=${_EX_MNTR_REZ%%x*}
     else
-        echo "Check xrandr.. multiple existing displays"
+        printf "%s\n" "Check xrandr.. multiple existing displays"
         exit 1
     fi
 
@@ -127,12 +127,13 @@ function _stop()
     xrandr \
         -s 0
 
-    ## kill x11vnc
+    ## kill all instances of x11vnc
     for _KILL in $(ps -ef | grep x11vnc | awk '{print $2}')
     do
         kill -9 ${_KILL} 2> /dev/null
     done
 
+    ## find all output modes named 'VIRTUAK.*'
     _EX_OUT_OFF=()
     declare -r _EX_OUT_OFF=($(\
         xrandr \
@@ -141,14 +142,15 @@ function _stop()
         | tac \
         | cut -d"+" -f1))
 
+    ## disable output
     for ITER in "${_EX_OUT_OFF[@]}"
     do
-        ## disable output
         xrandr \
             --output ${ITER%%-*} \
             --off
     done
 
+    ## find non connected modes named 'VIRTUAL[1-2]'
     _EX_OUT_RM=()
     declare -r _EX_OUT_RM=($(\
         xrandr \
@@ -159,12 +161,11 @@ function _stop()
         | sed 's/"//g' \
         | tac ))
 
+    ## delete mode and remove name
     for ITER in "${_EX_OUT_RM[@]}"
     do
-        ## delete mode
         xrandr \
             --delmode ${ITER%%-*} \"${ITER##*-}\"
-        ## remove name
         xrandr \
             --rmmode \"${ITER##*-}\"
     done
@@ -179,24 +180,28 @@ function _stop()
 
 clear
 
-echo "how many monitors [1-2] or exit running process by pressing [x]"
+printf "%s\n" \
+    "how many monitors [1-2] or exit running process by pressing [x]"
 read -p '[1-2, x]: ' _TBL_CNT
+
+printf "%s\n"  \
+    "Tablet resolutions in format ####x####"
 
 if [[ ${_TBL_CNT// } -eq 2 ]]
 then
-    echo "Tablet resolutions in format ####x####:"
     read -p 'left resolution: ' _TBL_LEFT_REZ
     read -p 'right resolution: ' _TBL_RGHT_REZ
-    echo "Should we set a password (leave blank for none) ?"
+    printf "%s\n" \
+        "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
     _start 2 ${_TBL_LEFT_REZ// } ${_TBL_RGHT_REZ// }
 elif [[ ${_TBL_CNT// } -eq 1 ]]
 then
-    echo "Tablet resolution in format #####x#####"
     read -p 'resoultion: ' _TBL_REZ
     read -p 'left or right of monitor [left or right]: ' _TBL_SIDE
-    echo "Should we set a password (leave blank for none) ?"
+    printf "%s\n" \
+        "Should we set a password (leave blank for none) ?"
     read -sp 'leave blank for none: ' _TBL_PASSWD
     main
     _start 1 ${_TBL_REZ// } ${_TBL_SIDE// }
@@ -205,6 +210,7 @@ then
     _stop
     exit 0
 else
-    echo "Invalid input"
+    printf "%s\n" \
+        "Invalid input"
     exit 1
 fi
