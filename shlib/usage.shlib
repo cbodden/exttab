@@ -1,0 +1,77 @@
+function usage()
+{
+    ## usage / description / help
+    clear
+    echo -e "
+    NAME
+        ${NAME} - enables tablets as external monitors
+
+    SYNOPSIS
+        ${NAME} [-1, -2, -h, -H, --help]
+                [-p passwd ,-P passwd ,--password=<passwd>]
+                [-l or -L <####x####>, --left=<####x####>]
+                [-r or -R <####x####>, --right=<####x####>]
+                [-m or -M <####x####>, --resolution=<####x####>]
+                [-x,-X,-q,-Q,--exit,--quit,--stop]
+                [-s <side>, -S <side>, --side=<side>]
+
+    DESCRIPTION
+        This script will convert either one or two devices into external
+        monitors using xrandr, x11vnc, and a vnc client.
+
+        This was tested with linux on a couple of different tablets (android)
+        and cell phones (android also).
+
+        This script can be called with no options for interactive or run with
+        options on the command line.
+
+    OPTIONS
+        -1
+            This option specifies one tablet. Has to be used in conjunction
+            with:
+                [-m <####x####>, -M <####x####>, --resolution=<####x####>]
+            and:
+                [-s <side>, -S <side>, --side=<side>]
+
+        -2
+            This option specifies two tablets. Has to be used in conjunction
+            with:
+                [-l <####x####>, -L <####x####>, --left=<####x####>]
+            and:
+                [-r <####x####>, -R <####x####>, --right=<####x####>]
+
+        -p <passwd>, -P <passwd>, --password=<passwd>
+            This option sets a password to be used in the VNC client. Does
+            not need to be used but should be so you don't get stray
+            connections.
+
+        -l <####x####>, -L <####x####>, --left=<####x####>
+            This option sets the resolution for the left tablet in the format
+            of \"####x####\". Needed when the [-2] option specified.
+
+        -r <####x####>, -R <####x####>, --right=<####x####>
+            This option sets the resolution for the right tablet in the format
+            of \"####x####\". Needed when the [-2] option specified.
+
+        -m <####x####>, -M <####x####>, --resolution=<####x####>
+            This option sets the resolution for the tablet in the format
+            of \"####x####\". Needed when the [-1] option specified.
+
+        -s <side>, -S <side>, --side=<side>
+            This option specifies which side the individual tablet will
+            display on.
+            This option is only used with [-1]
+
+        -x, -X, -q, -Q, --exit --quit, --stop
+            This option stops the running processes.
+            They are all the same option.
+
+        -h, -H, --help
+            This help file.
+
+    NOTES
+
+    EXAMPLES
+
+    "
+}

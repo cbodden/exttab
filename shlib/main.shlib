@@ -1,0 +1,20 @@
+function main()
+{
+    ## existing monitor info
+    readonly _EX_MNTR=$(xrandr \
+        | grep "connected primary")
+
+    if (( $(grep -c . <<<"${_EX_MNTR}") < 2 ))
+    then
+        readonly _EX_MNTR_NAME=$(echo ${_EX_MNTR} \
+            | awk '{print $1}')
+        readonly _EX_MNTR_REZ=$(echo ${_EX_MNTR} \
+            | awk '{print $4}')
+        readonly _EX_MNTR_HREZ=${_EX_MNTR_REZ%%x*}
+    else
+        printf "%s\n" "Check xrandr.. multiple existing displays"
+        exit 1
+    fi
+
+    trap _stop 1 2 3 9 15 SIGINT INT
+}

@@ -1,0 +1,62 @@
+function _stop()
+{
+    ## reset display
+    xrandr \
+        -s 0
+
+    ## find and kill all instances of x11vnc
+    _KILL=()
+    declare -r _KILL=($(\
+        ps -ef \
+        | grep x11vnc \
+        | grep -v grep \
+        | awk '{print $2}'))
+
+    for ITER in "${_KILL[@]}"
+    do
+        kill -9 ${ITER} 2> /dev/null
+    done
+
+    ## find all output modes named 'VIRTUAK.*'
+    _EX_OUT_OFF=()
+    declare -r _EX_OUT_OFF=($(\
+        xrandr \
+        | grep -i 'VIRTUAL.* connected' \
+        | awk '{print $1"-"$3}' \
+        | tac \
+        | cut -d"+" -f1))
+
+    ## disable output
+    for ITER in "${_EX_OUT_OFF[@]}"
+    do
+        xrandr \
+            --output ${ITER%%-*} \
+            --off
+    done
+
+    ## find non connected modes named 'VIRTUAL[1-2]'
+    _EX_OUT_RM=()
+    declare -r _EX_OUT_RM=($(\
+        xrandr \
+        | grep -E 'VIRTUAL[1-2].connected' -A 1 \
+        | awk '{print $1}' \
+        | sed 'N;s/\n/ /' \
+        | tr " " "-" \
+        | sed 's/"//g' \
+        | tac ))
+
+    ## delete mode and remove name
+    for ITER in "${_EX_OUT_RM[@]}"
+    do
+        xrandr \
+            --delmode ${ITER%%-*} \"${ITER##*-}\"
+        xrandr \
+            --rmmode \"${ITER##*-}\"
+    done
+
+    ## hack fix - when cleaning up, keyboard repaet fails
+    xset r on
+    reset
+
+    xrandr
+}
