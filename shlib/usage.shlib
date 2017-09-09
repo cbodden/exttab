@@ -73,6 +73,10 @@ NOTES
     This script can be run with no options which will put it into an
     interactive mode so you do not have to specify any options.
 
+    When using this script in two tablet mode, left tablet will use
+    port 5900 for vnc and the right will use port 5901. This will change
+    at some point in the future to allow user input.
+
     Most of the options have multiple formats (example: -h, -H, --help) for
     preferential reasons and i also just was really bored while writing the
     input section which made writing the usage just so much more difficult.
