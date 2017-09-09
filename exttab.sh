@@ -2,12 +2,11 @@
 
 LG_ALL=C
 LANG=C
+set -eo pipefail
 
 function main()
 {
-    set -eo pipefail
     readonly NAME=$(basename $0)
-
 
     ## existing monitor info
     readonly _EX_MNTR=$(xrandr \
@@ -102,7 +101,9 @@ function _stop()
     _KILL=()
     declare -r _KILL=($(\
         ps -ef \
-        | awk '/x11vnc/ {print $2}'))
+        | grep x11vnc \
+        | grep -v grep \
+        | awk '{print $2}'))
 
     for ITER in "${_KILL[@]}"
     do
@@ -130,7 +131,7 @@ function _stop()
     _EX_OUT_RM=()
     declare -r _EX_OUT_RM=($(\
         xrandr \
-        | grep -i 'VIRTUAL[1-2]' -A 1 \
+        | grep -E 'VIRTUAL[1-2].connected' -A 1 \
         | awk '{print $1}' \
         | sed 'N;s/\n/ /' \
         | tr " " "-" \
@@ -163,40 +164,110 @@ do
         || { printf "%s\n" "${ITER} not found. . ." >&2; exit 1; }
 done
 
-printf "%s\n" \
-    "how many monitors [1-2] or exit running process by pressing [x]"
-read -p '[1-2, x]: ' _TBL_CNT
-
-printf "%s\n"  \
-    "Tablet resolutions in format ####x####"
-
-if [[ ${_TBL_CNT// } -eq 2 ]]
+if [[ $# -eq 0 ]]
 then
-    read -p 'left resolution: ' _TBL_LEFT_REZ
-    read -p 'right resolution: ' _TBL_RGHT_REZ
     printf "%s\n" \
-        "Should we set a password (leave blank for none) ?"
-    read -sp 'leave blank for none: ' _TBL_PASSWD
-    printf "\n"
-    main
-    _start ${_TBL_LEFT_REZ// } left 5900 VIRTUAL1
-    _start ${_TBL_RGHT_REZ// } right 5901 VIRTUAL2
-elif [[ ${_TBL_CNT// } -eq 1 ]]
-then
-    read -p 'resoultion: ' _TBL_REZ
-    read -p 'left or right of monitor [left or right]: ' _TBL_SIDE
-    printf "%s\n" \
-        "Should we set a password (leave blank for none) ?"
-    read -sp 'leave blank for none: ' _TBL_PASSWD
-    printf "\n"
-    main
-    _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
-elif [[ "${_TBL_CNT// }" == "x" ]] || [[ "${_TBL_CNT// }" == "X" ]]
-then
-    _stop
-    exit 0
+        "how many monitors [1-2] or exit running process by pressing [x]"
+    read -p '[1-2, x]: ' _TBL_CNT
+
+    printf "%s\n"  \
+        "Tablet resolutions in format ####x####"
+
+    if [[ ${_TBL_CNT// } -eq 2 ]]
+    then
+        read -p 'left resolution: ' _TBL_LEFT
+        read -p 'right resolution: ' _TBL_RGHT
+        printf "%s\n" \
+            "Should we set a password (leave blank for none) ?"
+        read -sp 'leave blank for none: ' _TBL_PASSWD
+        printf "\n"
+        main
+        _start ${_TBL_LEFT// } left 5900 VIRTUAL1
+        _start ${_TBL_RGHT// } right 5901 VIRTUAL2
+    elif [[ ${_TBL_CNT// } -eq 1 ]]
+    then
+        read -p 'resoultion: ' _TBL_REZ
+        read -p 'left or right of monitor [left or right]: ' _TBL_SIDE
+        printf "%s\n" \
+            "Should we set a password (leave blank for none) ?"
+        read -sp 'leave blank for none: ' _TBL_PASSWD
+        printf "\n"
+        main
+        _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
+    elif [[ "${_TBL_CNT// }" == "x" ]] || [[ "${_TBL_CNT// }" == "X" ]]
+    then
+        _stop
+        exit 0
+    else
+        printf "%s\n" \
+            "Invalid input"
+        exit 1
+    fi
 else
-    printf "%s\n" \
-        "Invalid input"
-    exit 1
+    ## option selection
+    while getopts "12l:L:m:M:p:P:qQr:R:s:S:xX" OPT
+    do
+        case "${OPT}" in
+            '1')
+                _SCRPT_MODE=1
+                ;;
+            '2')
+                _SCRPT_MODE=2
+                ;;
+            'l'|'L')
+                _TBL_LEFT=${OPTARG}
+                ;;
+            'm'|'M')
+                _TBL_REZ=${OPTARG}
+                ;;
+            'p'|'P')
+                _TBL_PAWWD=${OPTARG}
+                ;;
+            'r'|'R')
+                _TBL_RGHT=${OPTARG}
+                ;;
+            's'|'S')
+                _TBL_SIDE=${OPTARG}
+                ;;
+            'x'|'X'|'q'|'Q')
+                _stop
+                exit 0
+                ;;
+            *)
+                usage \
+                    | less
+                exit 0
+                ;;
+        esac
+    done
+    if [[ ${OPTIND} -eq 1 ]]
+    then
+        usage \
+            | less
+        exit 0
+    fi
+    shift $((OPTIND-1))
+fi
+
+if [[ ${_SCRPT_MODE} -eq 2 ]]
+then
+    if [[ -z ${_TBL_LEFT} ]] || [[ -z ${_TBL_RGHT} ]]
+    then
+        echo "missing a resolution"
+    else
+        main
+        _start ${_TBL_LEFT// } left 5900 VIRTUAL1
+        _start ${_TBL_RGHT// } right 5901 VIRTUAL2
+    fi
+elif [[ ${_SCRPT_MODE} -eq 1 ]]
+then
+    if [[ -z ${_TBL_REZ} ]] || [[ -z ${_TBL_SIDE} ]]
+    then
+        echo "missing either [-m] or [-s]"
+    else
+        main
+        _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
+    fi
+else
+    echo "mode not set"
 fi
