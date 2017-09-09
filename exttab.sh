@@ -210,9 +210,39 @@ then
     fi
 else
     ## option selection
-    while getopts "12l:L:m:M:p:P:qQr:R:s:S:xX" OPT
+    OPTCHAR="12l:L:m:M:p:P:qQr:R:s:S:xX-:"
+    while getopts "${OPTCHAR}" OPT
     do
         case "${OPT}" in
+            '-')
+                case "${OPTARG}" in
+                    help=*)
+                        _VAL=${OPTARG#*=}
+                        echo "Help works ${_VAL}"
+                        exit 0
+                        ;;
+                    left=*)
+                        _VAL=${OPTARG#*=}
+                        _TBL_LEFT=${_VAL}
+                        ;;
+                    password=*)
+                        _VAL=${OPTARG#*=}
+                        _TBL_PASSWD=${_VAL}
+                        ;;
+                    right=*)
+                        _VAL=${OPTARG#*=}
+                        _TBL_RGHT=${_VAL}
+                        ;;
+                    'exit'|'quit'|'stop')
+                        _stop
+                        exit 0
+                        ;;
+                    *)
+                        echo "Use usage"
+                        exit 2
+                        ;;
+                esac
+                ;;
             '1')
                 _SCRPT_MODE=1
                 ;;
