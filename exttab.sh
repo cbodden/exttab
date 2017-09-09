@@ -258,7 +258,8 @@ if [[ ${_SCRPT_MODE} -eq 2 ]]
 then
     if [[ -z ${_TBL_LEFT} ]] || [[ -z ${_TBL_RGHT} ]]
     then
-        echo "missing a resolution"
+        printf "%s\n" \
+            "missing resolution(s)"
     else
         main
         _start ${_TBL_LEFT// } left 5900 VIRTUAL1
@@ -268,11 +269,13 @@ elif [[ ${_SCRPT_MODE} -eq 1 ]]
 then
     if [[ -z ${_TBL_REZ} ]] || [[ -z ${_TBL_SIDE} ]]
     then
-        echo "missing either [-m] or [-s]"
+        printf "%s\n" \
+            "Missing either [-m] or [-s]"
     else
         main
         _start ${_TBL_REZ// } ${_TBL_SIDE// } 5900 VIRTUAL1
     fi
 else
-    echo "mode not set"
+    printf "%s\n" \
+        "Option(s) not set"
 fi
