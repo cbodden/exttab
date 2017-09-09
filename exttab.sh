@@ -164,7 +164,8 @@ declare -r _LIST=( xrandr x11vnc )
 for ITER in "${_LIST[@]}"
 do
     command -v ${ITER} >/dev/null 2>&1 \
-        || { printf "%s\n" "${ITER} not found. . ." >&2; exit 1; }
+        || { printf "%s\n" "${ITER} not found. . ." >&2; \
+        exit 1; }
 done
 
 ## check if there is input at runtime to start {non-,}interactive
