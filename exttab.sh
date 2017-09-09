@@ -154,6 +154,9 @@ function _stop()
     xrandr
 }
 
+#### input section from here on down ####
+#### be weary, there be dragons...   ####
+
 clear
 
 ## check if xrandr && x11vnc exists
@@ -164,6 +167,7 @@ do
         || { printf "%s\n" "${ITER} not found. . ." >&2; exit 1; }
 done
 
+## check if there is input at runtime to start {non-,}interactive
 if [[ $# -eq 0 ]]
 then
     printf "%s\n" \
