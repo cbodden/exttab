@@ -154,6 +154,85 @@ function _stop()
     xrandr
 }
 
+function usage()
+{
+
+    ## usage / description / help
+    clear
+    echo -e "
+    NAME
+        ${NAME} - enables tablets as external monitors
+
+    SYNOPSIS
+        ${NAME} [-1, -2, -h, -H, --help]
+                [-p passwd ,-P passwd ,--password=<passwd>]
+                [-l or -L <####x####>, --left=<####x####>]
+                [-r or -R <####x####>, --right=<####x####>]
+                [-m or -M <####x####>, --resolution=<####x####>]
+                [-x,-X,-q,-Q,--exit,--quit,--stop]
+                [-s <side>, -S <side>, --side=<side>]
+
+    DESCRIPTION
+        This script will convert either one or two devices into external
+        monitors using xrandr, x11vnc, and a vnc client.
+
+        This was tested with linux on a couple of different tablets (android)
+        and cell phones (android also).
+
+    OPTIONS
+        -1
+            This option specifies one tablet. Has to be used in conjunction
+            with:
+                [-m <####x####>, -M <####x####>, --resolution=<####x####>]
+            and:
+                [-s <side>, -S <side>, --side=<side>]
+
+        -2
+            This option specifies two tablets. Has to be used in conjunction
+            with:
+                [-l <####x####>, -L <####x####>, --left=<####x####>]
+            and:
+                [-r <####x####>, -R <####x####>, --right=<####x####>]
+
+        -p <passwd>, -P <passwd>, --password=<passwd>
+            This option sets a password to be used in the VNC client. Does
+            not need to be used but should be so you don't get stray
+            connections.
+
+        -l <####x####>, -L <####x####>, --left=<####x####>
+            This option sets the resolution for the left tablet in the format
+            of \"####x####\". Needed when the [-2] option specified.
+
+        -r <####x####>, -R <####x####>, --right=<####x####>
+            This option sets the resolution for the right tablet in the format
+            of \"####x####\". Needed when the [-2] option specified.
+
+        -m <####x####>, -M <####x####>, --resolution=<####x####>
+            This option sets the resolution for the tablet in the format
+            of \"####x####\". Needed when the [-1] option specified.
+
+        -s <side>, -S <side>, --side=<side>
+            This option specifies which side the individual tablet will
+            display on.
+            This option is only used with [-1]
+
+        -x, -X, -q, -Q, --exit --quit, --stop
+            This option stops the running processes.
+            They are all the same option.
+
+        -h, -H, --help
+            This help file.
+
+    NOTES
+
+    EXAMPLES
+
+
+
+    "
+
+
+}
 #### input section from here on down ####
 #### be weary, there be dragons...   ####
 
@@ -210,15 +289,15 @@ then
     fi
 else
     ## option selection
-    OPTCHAR="12l:L:m:M:p:P:qQr:R:s:S:xX-:"
+    OPTCHAR="12hHl:L:m:M:p:P:qQr:R:s:S:xX-:"
     while getopts "${OPTCHAR}" OPT
     do
         case "${OPT}" in
             '-')
                 case "${OPTARG}" in
                     help=*)
-                        _VAL=${OPTARG#*=}
-                        echo "Help works ${_VAL}"
+                        usage \
+                            | less
                         exit 0
                         ;;
                     left=*)
@@ -229,17 +308,26 @@ else
                         _VAL=${OPTARG#*=}
                         _TBL_PASSWD=${_VAL}
                         ;;
+                    resolution=*)
+                        _VAL=${OPTARG#*=}
+                        _TBL_REZ=${_VAL}
+                        ;;
                     right=*)
                         _VAL=${OPTARG#*=}
                         _TBL_RGHT=${_VAL}
+                        ;;
+                    side=*)
+                        _VAL=${OPTARG#*=}
+                        _TBL_SIDE=${_VAL}
                         ;;
                     'exit'|'quit'|'stop')
                         _stop
                         exit 0
                         ;;
                     *)
-                        echo "Use usage"
-                        exit 2
+                        usage \
+                            | less
+                        exit 0
                         ;;
                 esac
                 ;;
@@ -248,6 +336,11 @@ else
                 ;;
             '2')
                 _SCRPT_MODE=2
+                ;;
+            'h'|'H')
+                usage \
+                    | less
+                exit 0
                 ;;
             'l'|'L')
                 _TBL_LEFT=${OPTARG}
