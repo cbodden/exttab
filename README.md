@@ -97,8 +97,30 @@ OPTIONS
         This help file.
 
 NOTES
+    This script can be run with no options which will put it into an
+    interactive mode so you do not have to specify any options.
+
+    Most of the options have multiple formats (example: -h, -H, --help) for
+    preferential reasons and i also just was really bored while writing the
+    input section which made writing the usage just so much more difficult.
 
 EXAMPLES
+    One tablet (1920x1200 rex) to the right of main display:
+        exttab.sh -1 -s right -m 1920x1200
+        exttab.sh -1 --side=right --resolution=1920x1200
+
+    Two tablets: left is 2560x1600 and right is 1920x1200:
+        exttab.sh -2 -l 2560x1600 -r 1920x1200
+        exttab.sh -2 --left=2560x1600 --right=1920x1200
+
+    One tablet: right with 1920x1200 rez with password Tablet:
+        exttab.sh -1 -s right -m 1920x1200 -p Tablet
+        exttab.sh -1 --side=right --resolution=1920x1200 --password=Tablet
+
+    Stop running tablet(s) and clean up xrandr:
+        exttab.sh -x
+        exttab.sh --exit
+        exttab.sh --stop
 
 ```
 
