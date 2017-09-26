@@ -1,3 +1,10 @@
+function _usage()
+{
+    usage \
+        | less -XFE
+    exit 0
+}
+
 function usage()
 {
     ## usage / description / help

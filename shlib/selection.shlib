@@ -61,9 +61,7 @@ else
             '-')
                 case "${OPTARG}" in
                     help=*)
-                        usage \
-                            | less
-                        exit 0
+                        _usage
                         ;;
                     left=*)
                         _VAL=${OPTARG#*=}
@@ -87,12 +85,9 @@ else
                         ;;
                     'exit'|'quit'|'stop')
                         _stop
-                        exit 0
                         ;;
                     *)
-                        usage \
-                            | less
-                        exit 0
+                        _usage
                         ;;
                 esac
                 ;;
@@ -103,9 +98,7 @@ else
                 _SCRPT_MODE=2
                 ;;
             'h'|'H')
-                usage \
-                    | less
-                exit 0
+                _usage
                 ;;
             'l'|'L')
                 _TBL_LEFT=${OPTARG}
@@ -127,16 +120,13 @@ else
                 exit 0
                 ;;
             *)
-                usage \
-                    | less
-                exit 0
+                _usage
                 ;;
         esac
     done
     if [[ ${OPTIND} -eq 1 ]]
     then
-        usage \
-            | less
+        _usage
         exit 0
     fi
     shift $((OPTIND-1))
